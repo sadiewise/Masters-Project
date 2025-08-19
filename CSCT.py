@@ -2,6 +2,34 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import matplotlib.pyplot as plt
+import plotly.express as px
+import streamlit.components.v1 as components
+from pathlib import Path
+from io import BytesIO
+from PIL import Image
+
+st.title("Ethical Cybersecurity Dashboard to Aid Policy Making and Cyber Deterrence Strategies In the UK")
+st.markdown("21019207 - MSc Data Science - CSCT Masters Project")
+
+st.set_page_config(page_title="Cyber Policy Dashboard", layout="wide")
+
+st.set_page_config(page_title="Ethical Cyber Policy Studio", layout="wide")
+
+st.title("Key Statistics")
+
+c1, c2, c3 = st.columns(3)
+c1.metric("NCSC IM incidents (2024)", "430")    
+c2.metric("Nationally significant (2024)", "89")
+c3.metric("Business breach prevalence (2025)", "43%")
+
+st.subheader("This dashboard aims to aid you in upholding ethical practice in policy making in the everchanging technology sector.")
+st.subheader("So why does ethical cyber deterrance matter?")
+st.markdown(" Ethical cyber deterrance matters because it's the difference between protecting digital societies responsibly and spiralling into a lawless arms race."\
+            "Ethical cyber detterance preserves global stability, builds trust among nations, reduces collateral damage, and sets norms for future conflicts. " \
+            "When it comes to the UK, the conversation is deeply routed in how the nation balances power, legality, and demoncratic values in cyberspace." \
+            "The UKs approach to cyber deterrance, especially through its National Cyber Force (NCF), has sparked a range of ethical debates. These discussions" \
+            " revolve around how the UK balances national security with democratic values, legal boundaries, and global norms.")
+
 
 # --- Session state defaults ---
 st.session_state.setdefault("show_dashboard", False)
@@ -380,11 +408,25 @@ with tab3:
         text="Intent", size=[marker_size], size_max=30,
         title="Risk vs Reward Map"
     )
+
+    st.subheader("What does each quadrant mean?")
+    st.markdown("- Top left: Moderate reward/high ethical risk")
+    st.markdown("- Top right: High reward/High ethical risk")
+    st.markdown("- Bottom Left: Moderare Reward/Low wthical risk")
+    st.markdown("- Bottom right: High reward/Low ethical risk")
+
     fig.update_traces(textposition="top center")
+
     fig.update_layout(
         shapes=[
-            dict(type="line", x0=5, x1=5, y0=0, y1=10, line=dict(dash="dash")),
-            dict(type="line", x0=0, x1=10, y0=5, y1=5, line=dict(dash="dash")),
+            dict(
+                type="line", x0=5, x1=5, y0=0, y1=10, 
+                line=dict(dash="dash", color = "red")
+                ),
+            dict(
+                type="line", x0=0, x1=10, y0=5, y1=5,
+                  line=dict(dash="dash", color="red")
+                ),
         ],
         xaxis=dict(range=[0,10], dtick=1),
         yaxis=dict(range=[0,10], dtick=1)
@@ -393,17 +435,17 @@ with tab3:
 
     def classify(benefit, risk):
         if benefit >= 7 and risk <= 4:
-            return "High reward / Low ethical risk → **Proceed** with standard safeguards."
+            return "High reward / Low ethical risk → Proceed with standard safeguards."
         if benefit >= 7 and risk > 4:
-            return "High reward / Higher ethical risk → **Proceed with strong oversight** and proportionality checks."
+            return "High reward / Higher ethical risk → Proceed with strong oversight and proportionality checks."
         if benefit < 7 and risk <= 4:
-            return "Moderate reward / Low ethical risk → **Consider** if resources allow; ensure utility."
-        return "Moderate reward / Higher ethical risk → **Reconsider or add safeguards** (privacy, legality, civilian protection)."
+            return "Moderate reward / Low ethical risk → Consider if resources allow; ensure utility."
+        return "Moderate reward / Higher ethical risk → Reconsider or add safeguards (privacy, legality, civilian protection)."
 
     st.info(classify(benefit, ethical_risk))
-    st.download_button("Download Risk vs Reward snapshot",
+    st.download_button("Download Risk vs Reward visualisation",
                        data=df_rr.to_csv(index=False).encode("utf-8"),
-                       file_name="risk_vs_reward_snapshot.csv",
+                       file_name="riskreward.csv",
                        mime="text/csv")
 
 # =========================
