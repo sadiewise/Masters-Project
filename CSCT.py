@@ -3,15 +3,34 @@ import pandas as pd
 import plotly.express as px
 import streamlit.components.v1 as components
 from pathlib import Path
+from io import BytesIO
+from PIL import Image
+import matplotlib.pyplot as plt
 
 st.title("Ethical Cybersecurity Dashboard to Aid Policy Making and Cyber Deterrence Strategies In the UK")
-st.markdown("Dashboard showing ethical and operational impacts of proposed cyber policies.")
 st.markdown("21019207 - MSc Data Science - CSCT Masters Project")
 
 st.set_page_config(page_title="Cyber Policy Dashboard", layout="wide")
 
+st.set_page_config(page_title="Ethical Cyber Policy Studio", layout="wide")
+
+st.title("Key Statistics")
+
+c1, c2, c3 = st.columns(3)
+c1.metric("NCSC IM incidents (2024)", "430")    
+c2.metric("Nationally significant (2024)", "89")
+c3.metric("Business breach prevalence (2025)", "43%")
+
+st.subheader("This dashboard aims to aid you in upholding ethical practice in policy making in the everchanging technology sector.")
+st.subheader("So why does ethical cyber deterrance matter?")
+st.markdown(" Ethical cyber deterrance matters because it's the difference between protecting digital societies responsibly and spiralling into a lawless arms race."\
+            "Ethical cyber detterance preserves global stability, builds trust among nations, reduces collateral damage, and sets norms for future conflicts. " \
+            "When it comes to the UK, the conversation is deeply routed in how the nation balances power, legality, and demoncratic values in cyberspace." \
+            "The UKs approach to cyber deterrance, especially through its National Cyber Force (NCF), has sparked a range of ethical debates. These discussions" \
+            " revolve around how the UK balances national security with democratic values, legal boundaries, and global norms.")
+
 # Tabs for navigation
-tab1, tab2, tab3 , tab4 = st.tabs(["Risk Register","Policy Types", "Policy Advice", "Visualisations"])
+tab1, tab2, tab3 , tab4 = st.tabs(["Risk Register","Policy Types", "Policy Advice", "Visualisations and Statistics"])
 
 with tab1:
     #Risk Register Excel
@@ -23,6 +42,10 @@ with tab1:
     "to whatever context necessary and they support informed decision making. ")
     st.write("Below is a risk register free to download and fill in as you wish.")
     st.markdown("https://uweacuk-my.sharepoint.com/:x:/r/personal/sadie2_wise_live_uwe_ac_uk/Documents/Documents/Data%20Science/Masters%20Project/Empty%20Risk%20Register.xlsm?d=wa033a1e78f9e4810842c72436dde604a&csf=1&web=1&e=ifOT5M")
+    st.subheader("Usage and guidance")
+    st.markdown("This should aid you in risk criteria and scoring")
+    st.image(r"C:\Users\sadie\OneDrive - UWE Bristol\Documents\Data Science\Masters Project\useage.png")
+    st.image(r"C:\Users\sadie\OneDrive - UWE Bristol\Documents\Data Science\Masters Project\definitions.png")
     st.subheader("Data from Excel File")
     st.write("There is an example illustrated below for your aid which includes generalised risks for cyber deterrance and policy making. All figures are estimated based off real world examples and sensible, educated guesses." \
     "See notes for sources")
@@ -33,6 +56,10 @@ with tab2:
     import plotly.express as px
 
     st.header("Policy Types")
+    st.markdown("This page intends to give you some more detail into the types of policies you may come across. Cybersecurity policies provide structured approaches for responding to incidents, reducing risks, and aligning actions \
+                 with ethical and legal frameworks. Each policy type reflects a different strategic intent — from prevention and detection through to mitigation, corrective measures, and broader approaches such as collective defence \
+                 or normative guidance. This section introduces the key policy types, explains their purpose, and highlights how they can be applied in real-world scenarios. By understanding the strengths and limitations of each approach,\
+                 decision-makers can better tailor their responses to cyber threats while balancing technical effectiveness, ethical responsibility, and organisational resilience.")
     st.caption("Search, filter, explore details, compare policies, and send a selection to the simulation.")
 
     # --- Load & normalise columns ---
@@ -65,10 +92,6 @@ with tab2:
     has_purpose = "Purpose" in df.columns
     has_examples = "Examples" in df.columns
     has_link = "Link" in df.columns
-
-    #if not has_name:
-        #st.warning("Column 'Policy Name' wasn’t found (tried to infer). Showing raw table below.")
-        #st.dataframe(df_raw, use_container_width=True)
 
     col_a, col_b = st.columns([2, 1])
     with col_a:
@@ -148,10 +171,7 @@ with tab2:
                     )
 
 
-#side bar
-import streamlit as st
-import pandas as pd
-
+#side bar and tab 3
 
 def evaluate_policy(scale: int, intent: str):
     if scale >= 8:
@@ -238,35 +258,36 @@ def evaluate_policy(scale: int, intent: str):
 
     return severity, advice
 
+#sidebar
 
 st.sidebar.title("Scenario Inputs and advice")
 st.sidebar.subheader("Why do you need to make a policy? What happened?")
 
-scenario = st.sidebar.selectbox(
+_ = st.sidebar.selectbox(
     "Select Scenario",
     ["Civilian Breach", "Military Disruption", "Corporate Attack", "Infrastructure Strike", "Data Loss"],
-    key="scenario"
+    key="scenario"  # sidebar-owned key
 )
-attack_scale = st.sidebar.slider("Attack Severity (1-10)", 1, 10, 5, key="scale")
-intent = st.sidebar.radio(
+_ = st.sidebar.slider("Attack Severity (1-10)", 1, 10, 5, key="scale")  # sidebar-owned key
+_ = st.sidebar.radio(
     "Policy Intent",
     ["Prevention", "Detection", "Mitigation", "Directive", "Corrective", "Normative",
      "Collective Defense", "Attribution and Response", "Strategic Ambiguity", "Evaluative"],
-    key="intent"
+    key="intent"  # sidebar-owned key
 )
-
 if st.sidebar.button("Run Simulation"):
     st.session_state["show_dashboard"] = True
 
-
 if st.session_state.get("show_dashboard"):
+    # Prefer Scenario Explorer payload; fallback to sidebar values
+    p = st.session_state.get("sim_payload", {})
+    scale  = int(p.get("scale", st.session_state.get("scale", 5)))
+    intent = p.get("intent", st.session_state.get("intent", "Prevention"))
+
+#tab3
+
+    # --- intent explainer ---
     st.title("Policy advice")
-
-
-    scale = int(st.session_state.get("scale", attack_scale))
-    intent = st.session_state.get("intent", intent)
-
-
     intenttips = {
         "Prevention": "Reduce the chance of an incident (hardening, MFA, patching, email security).",
         "Detection": "Spot issues quickly (logging, alerting, endpoint telemetry).",
@@ -282,58 +303,18 @@ if st.session_state.get("show_dashboard"):
     st.markdown("### What does this intent mean?")
     st.info(intenttips.get(intent, "Configure your approach using the options below."))
 
-   
+    # --- toggles -> simple checklist ---
     intenttoggles = {
-        "Prevention": [
-            ("Enable MFA everywhere", 12),
-            ("Patch critical systems this week", 10),
-            ("Tighten email filtering/DMARC", 8),
-        ],
-        "Detection": [
-            ("Turn on key alerts (high-severity)", 10),
-            ("Daily review of EDR/XDR dashboard", 8),
-            ("Create triage runbook for top 5 alerts", 8),
-        ],
-        "Mitigation": [
-            ("Verify backups restore successfully", 12),
-            ("Update incident response runbook", 9),
-            ("Practice containment on a test host", 8),
-        ],
-        "Directive": [
-            ("Approve updated security policy", 8),
-            ("Add cyber clauses to supplier SLAs", 10),
-            ("Schedule internal audit spot-checks", 7),
-        ],
-        "Corrective": [
-            ("Run post-incident review (RCA)", 10),
-            ("Implement hardening from findings", 9),
-            ("Targeted retraining for affected teams", 7),
-        ],
-        "Normative": [
-            ("Complete an ethics impact check", 9),
-            ("Apply public-interest test", 7),
-            ("Record transparent decision rationale", 6),
-        ],
-        "Collective Defense": [
-            ("Share IOCs with partners/NCSC", 9),
-            ("Join next ISAC briefing", 7),
-            ("Agree mutual-aid contacts/MoU", 8),
-        ],
-        "Attribution and Response": [
-            ("Evidence chain & attribution checklist", 9),
-            ("Legal proportionality review", 8),
-            ("Draft response options & comms lines", 8),
-        ],
-        "Strategic Ambiguity": [
-            ("Define ambiguity guardrails", 8),
-            ("Agree signalling channels", 7),
-            ("Set escalation stop-loss criteria", 8),
-        ],
-        "Evaluative": [
-            ("Set 3 KPIs (e.g., MTTD/MTTR + ethics)", 8),
-            ("Plan assurance review/independent check", 8),
-            ("Record benefits & lessons tracker", 7),
-        ],
+        "Prevention": [("Enable MFA everywhere", 12), ("Patch critical systems this week", 10), ("Tighten email filtering/DMARC", 8)],
+        "Detection": [("Turn on key alerts (high-severity)", 10), ("Daily review of EDR/XDR dashboard", 8), ("Create triage runbook for top 5 alerts", 8)],
+        "Mitigation": [("Verify backups restore successfully", 12), ("Update incident response runbook", 9), ("Practice containment on a test host", 8)],
+        "Directive": [("Approve updated security policy", 8), ("Add cyber clauses to supplier SLAs", 10), ("Schedule internal audit spot-checks", 7)],
+        "Corrective": [("Run post-incident review (RCA)", 10), ("Implement hardening from findings", 9), ("Targeted retraining for affected teams", 7)],
+        "Normative": [("Complete an ethics impact check", 9), ("Apply public-interest test", 7), ("Record transparent decision rationale", 6)],
+        "Collective Defense": [("Share IOCs with partners/NCSC", 9), ("Join next ISAC briefing", 7), ("Agree mutual-aid contacts/MoU", 8)],
+        "Attribution and Response": [("Evidence chain & attribution checklist", 9), ("Legal proportionality review", 8), ("Draft response options & comms lines", 8)],
+        "Strategic Ambiguity": [("Define ambiguity guardrails", 8), ("Agree signalling channels", 7), ("Set escalation stop-loss criteria", 8)],
+        "Evaluative": [("Set 3 KPIs (e.g., MTTD/MTTR + ethics)", 8), ("Plan assurance review/independent check", 8), ("Record benefits & lessons tracker", 7)],
     }
 
     st.markdown("### Quick Enhancements to add to your checklist")
@@ -341,7 +322,7 @@ if st.session_state.get("show_dashboard"):
     toggles = intenttoggles.get(intent, [])
     cols = st.columns(3)
     checked = []
-    readiness_score = 50  
+    readiness_score = 50
     for i, (label, pts) in enumerate(toggles):
         with cols[i % 3]:
             on = st.checkbox(label, key=f"intent_toggle_{intent}_{i}")
@@ -361,7 +342,7 @@ if st.session_state.get("show_dashboard"):
     st.download_button("Download Checklist", edited.to_csv(index=False),
                        file_name=f"{intent.lower().replace(' ','_')}_checklist.csv", mime="text/csv")
 
-    
+    # --- quick link ---
     quicklinks = {
         "Prevention": ("NCSC: 10 Steps", "https://www.ncsc.gov.uk/collection/10-steps-to-cyber-security"),
         "Detection": ("NCSC: Logging", "https://www.ncsc.gov.uk/collection/device-security-guidance/managing-deployed-devices/logging-and-protective-monitoring"),
@@ -379,28 +360,107 @@ if st.session_state.get("show_dashboard"):
         st.markdown("### Useful Link for your policy intent")
         st.markdown(f"[{label}]({url})")
 
-    
     severity_level, policy_advice = evaluate_policy(scale, intent)
-
     st.subheader("Policy Impact Assessment")
     st.markdown(f"**Threat Severity Level:** `{severity_level}`")
     st.markdown(f"**Policy Intent Chosen:** `{intent}`")
     st.markdown("### Recommended Strategic Advice")
     st.info(policy_advice)
 
+    
+
 else:
-    st.info("Choose options in the sidebar and press **Run Simulation** to see advice here.")
+    st.markdown(" ")
+
+    # --- Ensure intent & scale exist ---
+# Prefer simulation payload if available, else fall back to sidebar inputs
+if "sim_payload" in st.session_state:
+    intent = st.session_state["sim_payload"]["intent"]
+    scale = st.session_state["sim_payload"]["scale"]
+else:
+    intent = st.session_state.get("intent", "Prevention")  # fallback default
+    scale = st.session_state.get("scale", 5)              # fallback default
+
+
+
+st.markdown("### Risk vs Reward (Ethical/Legal Risk vs Operational Benefit)")
+
+# 1) Sensible defaults per intent (0–10). Adjust freely.
+DEFAULT_SCORES = {
+    "Prevention":              {"benefit": 8, "ethical_risk": 3},
+    "Detection":               {"benefit": 7, "ethical_risk": 3},
+    "Mitigation":              {"benefit": 7, "ethical_risk": 2},
+    "Directive":               {"benefit": 6, "ethical_risk": 4},
+    "Corrective":              {"benefit": 6, "ethical_risk": 3},
+    "Normative":               {"benefit": 5, "ethical_risk": 2},
+    "Collective Defense":      {"benefit": 7, "ethical_risk": 5},
+    "Attribution and Response":{"benefit": 7, "ethical_risk": 6},
+    "Strategic Ambiguity":     {"benefit": 6, "ethical_risk": 7},
+    "Evaluative":              {"benefit": 5, "ethical_risk": 2},
+}
+
+# Get baseline for the chosen intent
+base = DEFAULT_SCORES.get(intent, {"benefit": 6, "ethical_risk": 4})
+
+# 2) Let the user nudge the scores (kept simple & transparent)
+c1, c2 = st.columns(2)
+with c1:
+    benefit = st.slider("Operational Benefit (0–10)", 0, 10, base["benefit"], help="How much this intent helps achieve objectives?")
+with c2:
+    ethical_risk = st.slider("Ethical/Legal Risk (0–10)", 0, 10, base["ethical_risk"], help="Privacy, proportionality, civilian impact, legal exposure.")
+
+# 3) Optional: reflect severity (scale) as marker size
+marker_size = 10 + (int(scale) * 2 if "scale" in locals() else 10)
+
+# 4) Build a tiny dataset for plotting
+df_rr = pd.DataFrame([{
+    "Intent": intent,
+    "Operational Benefit": benefit,
+    "Ethical/Legal Risk": ethical_risk,
+    "Severity": int(scale) if "scale" in locals() else None
+}])
+
+# 5) Make a quadrant-style scatter (interactive)
+fig = px.scatter(
+    df_rr, x="Operational Benefit", y="Ethical/Legal Risk",
+    text="Intent", size=[marker_size], size_max=30,
+    title="Risk vs Reward Map"
+)
+fig.update_traces(textposition="top center")
+
+# Add guideline lines for quadrants (at 5/10)
+fig.update_layout(
+    shapes=[
+        dict(type="line", x0=5, x1=5, y0=0, y1=10, line=dict(dash="dash")),
+        dict(type="line", x0=0, x1=10, y0=5, y1=5, line=dict(dash="dash")),
+    ],
+    xaxis=dict(range=[0,10], dtick=1),
+    yaxis=dict(range=[0,10], dtick=1)
+)
+st.plotly_chart(fig, use_container_width=True)
+
+# 6) Simple narrative to make it assessor-friendly
+def classify(benefit, risk):
+    if benefit >= 7 and risk <= 4:
+        return "High reward / Low ethical risk → **Proceed** with standard safeguards."
+    if benefit >= 7 and risk > 4:
+        return "High reward / Higher ethical risk → **Proceed with strong oversight** and proportionality checks."
+    if benefit < 7 and risk <= 4:
+        return "Moderate reward / Low ethical risk → **Consider** if resources allow; ensure utility."
+    return "Moderate reward / Higher ethical risk → **Reconsider or add safeguards** (privacy, legality, civilian protection)."
+
+st.info(classify(benefit, ethical_risk))
+
+# download
+csv_bytes = df_rr.to_csv(index=False).encode("utf-8")
+st.download_button("Download Risk vs Reward graph", data=csv_bytes, file_name="risk_vs_reward_snapshot.csv", mime="text/csv")
+
 
 
 with tab4:
-    st.markdown("Below are some visualisation")
+    st.subheader("Below are some visualisation")
 
-with tab4:
-    import pandas as pd
-    import plotly.express as px
-    import streamlit as st
-
-    #NCSC incidents (from Annual Review 2023/2024)
+#NCSC incidents (from Annual Review 2023/2024)
     ncsc = pd.DataFrame({
         "Year": [2023, 2024],
         "Incidents requiring NCSC IM support": [371, 430],
@@ -411,35 +471,60 @@ with tab4:
         ncsc, x="Year",
         y=["Incidents requiring NCSC IM support", "Nationally significant incidents"],
         barmode="group",
-        title="Incidents triaged by NCSC IM team & nationally significant subset"
     )
+
     st.plotly_chart(fig_ncsc, use_container_width=True)
     st.caption("Source: NCSC Annual Reviews 2023 & 2024. See notes in report for methodology.")
 
-    # 2) UK breach prevalence (DSIT Cyber Security Breaches Survey 2024 → 2025)
-    breaches = pd.DataFrame({
-        "Year": [2024, 2025],
-        "Businesses reporting breaches (%)": [50, 43],
-        "Charities reporting breaches (%)": [32, 30],
-    })
-    st.subheader("UK organisations reporting a breach (12-month prevalence)")
-    fig_breach = px.bar(
-        breaches, x="Year",
-        y=["Businesses reporting breaches (%)", "Charities reporting breaches (%)"],
-        barmode="group",
-        title="Breach prevalence among businesses & charities"
-    )
-    st.plotly_chart(fig_breach, use_container_width=True)
-    st.caption("Source: UK Cyber Security Breaches Survey 2025 (with 2024 comparator).")
+#timeline
+st.subheader("Timeline of Major UK Cyber Incidents")
 
-    #Forward look: AI & the threat (context panel)
-    st.subheader("Forward look: AI and the cyber threat (to 2027)")
-    st.info(
-        "NCSC assesses that AI will increase the frequency and sophistication of cyber attacks through 2027 "
-        "by lowering entry barriers (phishing/social engineering) and enhancing capability (discovery, tooling, scale)."
-    )
-    st.caption("Source: NCSC assessments on the near-term impact of AI on the cyber threat.")
+timeline = pd.DataFrame([
+    {"Year": 2015, "Incident": "TalkTalk data breach", "Impact": "Around 150,000 Customers' personal details accessed"},
+    {"Year": 2017, "Incident": "NHS WannaCry", "Impact": "70,000 devices affected in NHS"},
+    {"Year": 2018, "Incident": "British Airways Data Breach", "Impact": "400,000 customers addresses, card details and personal information stolen"},
+    {"Year": 2022, "Incident": "KP snacks ransomware attack", "Impact": "Proccessing of orders and IT systems stopped"},
+    {"Year": 2024, "Incident": "Leicester City Council Cyber incident", "Impact": "Sensitive information compromised"},
+    {"Year": 2025, "Incident": "M&S Cyber Attacks", "Impact": "Customer data stolen, online order stopped"},
+])
 
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.scatter(timeline["Year"], [1]*len(timeline), s=200, marker="x")
+for _, row in timeline.iterrows():
+    ax.text(row["Year"], 1.05, row["Incident"], rotation=45, ha="right", va="bottom", fontsize=10)
 
-   
+ax.set_title("Timeline of Major UK Cyber Incidents")
+ax.set_xlabel("Year")
+ax.set_yticks([])
+ax.set_ylim(0.9, 1.25)
+ax.grid(True, axis="x", linestyle="--", alpha=0.3)
+
+st.pyplot(fig)
+
+with st.expander("Show incident notes"):
+    st.dataframe(timeline, use_container_width=True)
+
+st.subheader("Below are some Statistics")
+
+st.markdown("50% of UK businesses and 32% of charities reported experiencing a cyber breach or attack in the past 12 months")
+st.markdown("This rises to 70% for medium sized businesses and 74% for large enterprises")
+st.markdown("Source: https://www.gov.uk/government/statistics/cyber-security-breaches-survey-2024/cyber-security-breaches-survey-2024")
+st.markdown("--------------------------------------------------------------------")
+st.markdown("Phishing remains a top threat, affecting 84% of businesses and 83% of charities")
+st.markdown("Impersination attacks are seen by 35% of businesses and 37% of charities")
+st.markdown("Malware and viruses affected 17% of businesses and 14% of charities")
+st.markdown("Source: https://www.gov.uk/government/statistics/cyber-security-breaches-survey-2024/cyber-security-breaches-survey-2024")
+st.markdown("--------------------------------------------------------------------")
+st.markdown("Over 70% of businesses use basic protections like: Updated malware protection, passwork policies, cloud backups, restricted admin rights, network firewalls")
+st.markdown("Source: https://www.gov.uk/government/statistics/cyber-security-breaches-survey-2024/cyber-security-breaches-survey-2024")
+st.markdown("--------------------------------------------------------------------")
+st.markdown("The average cost of the most distruptive breaches are: £1205 for small businesses, £10830 for medium and large business and £460 for charities")
+st.markdown("Source: https://www.gov.uk/government/statistics/cyber-security-breaches-survey-2024/cyber-security-breaches-survey-2024")
+
+st.subheader("Ethical Implications")
+st.markdown("These statistics highlight the need for ethical responsibility of UK organisations to: " \
+"Protect user data and maintain trust" \
+"Invest in proactive security rather than reactive damage control." \
+" Educate stakeholders to reduce human error and phishing success." \
+" Report breaches transparently, especially when personal data is involved.")
 
